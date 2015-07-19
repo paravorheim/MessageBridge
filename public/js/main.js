@@ -264,7 +264,10 @@ function simpleSearch(query, cb) {
 }
 
 var socket = io.connect();
-socket.on('updateChatData', function (dt) { messageList.updateChatData.apply(messageList, [dt])});
+socket.on('updateChatData', function (dt) { 
+	messageList.updateChatData.apply(messageList, [dt]);
+	console.log(dt);
+});
 
 $(window).resize(windowResize);
 

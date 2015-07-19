@@ -1,7 +1,7 @@
 var express = require('express');
 var app = express();
 var port = 3000;
-var io = require('socket.io').listen(app.listen(port));
+var io = require('socket.io').listen(app.listen(port, '0.0.0.0'));
 var chat = require('./chatReader').chat;
 var sendMessage = require('./chatSender').sendMessage;
 
@@ -22,6 +22,7 @@ function chatUpdateTrigger(chat_ids) {
 	console.log('chatUpdate');
 	for (var i=0; i<chat_ids.length; i++) {
 		chat.checkChatUpdates(chat_ids[i], function (chat_id, msgs) {
+			console.log(msgs);
 			io.sockets.emit('updateChatData', {chat_id: chat_id, data: msgs});
 		});
 	}
