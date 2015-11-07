@@ -38,7 +38,7 @@ var chat = new function () {
 	this.getAttachmentPath = function (attachment_id, cb) {
     var self = this;
     var fl = self.attachmentInfo[attachment_id];
-    
+
     fl.path = expandHomeDir(fl.filename);
     cb(_.pick(fl, "path", "filename", "uti", "mime_type"));
 
@@ -52,12 +52,13 @@ var chat = new function () {
     return rr;
   }
 
-	this.getChat = function (chat_id, cb) {	
+	this.getChat = function (chat_id, cb) {
 		var self = this;
 		var ar = [];
     var mids = [];
 		var query = queries.chatQuery.replace('[CHAT_ID]', chat_id).replace('[OTHER_CONST]', '');
 		this.db.each(query, function(err, row) {
+      // console.log(row);
 			row.lookupValue = self.lookupName(row.who_from).lookupValue;
       var rr = self.parseMessageRow.apply(self, [row]);
       mids.push(row.message_id);
@@ -75,7 +76,10 @@ var chat = new function () {
   this.checkChatUpdates = function (chat_id, cb) {
     var self = this;
     var ar = [];
-    if (! _.has(self.chatMessageIds, chat_id)) return;
+    if (! _.has(self.chatMessageIds, chat_id)) {
+      return;
+    }
+    // console.log(chat_id);
     var mids = self.chatMessageIds[chat_id];
     var query = queries.chatQuery.replace('[CHAT_ID]', chat_id).replace('[OTHER_CONST]', 'and cmj.message_id not in (' + mids.join(', ') + ')');
     this.db.each(query, function(err, row) {
@@ -83,9 +87,9 @@ var chat = new function () {
       var rr = self.parseMessageRow.apply(self, [row]);
       mids.push(row.message_id);
       ar.push(row);
-    }, function (err) { 
+    }, function (err) {
       self.chatMessageIds[chat_id] = mids;
-      if (cb) cb.apply(self, [chat_id, ar]); 
+      if (cb) cb.apply(self, [chat_id, ar]);
     });
   }
 	this.getAllChats = function (cb) {
@@ -95,6 +99,7 @@ var chat = new function () {
 		var allData = [];
 
 		this.db.each(queries.allChatQuery, function(err, row) {
+      console.log(row);
 			if (row.people.indexOf(',') > -1) {
 				var els = row.people.split(',');
 				var na = [];
@@ -103,14 +108,13 @@ var chat = new function () {
 			} else {
 				row.people = [self.lookupName(row.people)];
 			}
-			
+
 			ar.push({chat_id: row.chat_id, people: row.people, lastUpdate: row.most_recent_msg, guid:row.guid});
 			allData.push(row);
-		}, function (err) { 
+		}, function (err) {
 			if (err) console.log(err);
 			if (cb) cb.apply(self, [ar, allData]);
 		});
-
 	}
   this.getChatMessageCounts = function (cb) {
     var self = this;
@@ -136,7 +140,7 @@ var chat = new function () {
         if (! _.has(newMC, k)) return;
         if (oldMC[k] != newMC[k]) diffs.push(k);
       });
-        
+
       if (diffs.length > 0) self.chatUpdateTrigger(diffs);
     });
   }
@@ -161,9 +165,9 @@ var chat = new function () {
 		var self = this;
 		//fs.watch(this.dbPath, function(a,b) { self.watchTrigger(a,b,self) });
 		this.db = new sqlite3.Database(this.dbPath, sqlite3.OPEN_READONLY, function (e) {
-      if (self.pollMessageCounts) self.enableMessageCountPoll();
-      if (self.debug) self.db.on('profile', function (e, t) { console.log(e, t) });
-      if (cb) cb.apply(self, [self.dbPath, e] ); 
+      		if (self.pollMessageCounts) self.enableMessageCountPoll();
+      		if (self.debug) self.db.on('profile', function (e, t) { console.log(e, t) });
+      		if (cb) cb.apply(self, [self.dbPath, e] );
     });
 	}
 }

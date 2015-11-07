@@ -20,19 +20,35 @@ app.get('/attachment/:id', function (req, res) {
 function chatUpdateTrigger(chat_ids) {
 	var chats = {};
 	console.log('chatUpdate');
-	for (var i=0; i<chat_ids.length; i++) {
+
+	for(var i=0; i<chat_ids.length; i++) {
 		chat.checkChatUpdates(chat_ids[i], function (chat_id, msgs) {
 			console.log(msgs);
 			io.sockets.emit('updateChatData', {chat_id: chat_id, data: msgs});
 		});
 	}
+
+	//previous implementation
+	// for (var i=0; i<chat_ids.length; i++) {
+	// 	chat.checkChatUpdates(chat_ids[i], function (chat_id, msgs) {
+	// 		console.log(msgs);
+	// 		io.sockets.emit('updateChatData', {chat_id: chat_id, data: msgs});
+	// 	});
+	// }
 }
 chat.chatUpdateTrigger = chatUpdateTrigger;
 chat.openChatDatabase(function (dbPath, e) {
 	console.log('Database opened: ' + dbPath);
+
+	//The next line makes it so we don't need to use the webpage at all.
+	//finds all currently used chat ids. Won't be able to update for new conversations...
+	//	problem for later lol
+
+	for(var i=0; i<10; i++) {
+		chat.getChat(i, function (chat_id, msgs) {
+		});
+	}
 });
-
-
 
 io.sockets.on('connection', function (socket) {
 	var current_chat_id = 0;
@@ -57,12 +73,11 @@ io.sockets.on('connection', function (socket) {
 	socket.on('getContactValues', function (fn) {
 		fn(chat.getContactValues.apply(chat));
 	});
-	
+
 	socket.on('getChatUpdates', function (chat_id, fn) {
 		if (arguments.length == 1) {
 			fn = chat_id;
 			chat_id = current_chat_id;
-			console.log(chat_id);
 		}
 		chat.checkChatUpdates(chat_id, fn);
 	});
